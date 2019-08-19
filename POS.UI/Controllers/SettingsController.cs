@@ -142,12 +142,12 @@ namespace POS.UI.Controllers
 
         public IActionResult PostInvoiceToNAV()
         {
-            NavPostData sync = new NavPostData(_context, _mapper, _logger);
+            NavPostData sync = new NavPostData(_context, _mapper);
             Store store = JsonConvert.DeserializeObject<Store>(HttpContext.Session.GetString("Store"));
             //sync.PostSalesInvoice(store);
             //sync.PostSalesInvoice(store);
             BackgroundJob.Enqueue(() => sync.PostSalesInvoice(store));
-            BackgroundJob.Enqueue(() => Console.WriteLine("test from background"));
+           // BackgroundJob.Enqueue(() => Console.WriteLine("test from background"));
             var data = new
             {
                 Status = 200,
@@ -157,7 +157,7 @@ namespace POS.UI.Controllers
         }
         public IActionResult PostCreditNoteToNAV()
         {
-            NavPostData sync = new NavPostData(_context, _mapper, _logger);
+            NavPostData sync = new NavPostData(_context, _mapper);
             Store store = JsonConvert.DeserializeObject<Store>(HttpContext.Session.GetString("Store"));
             //sync.PostSalesInvoice(store);
 
@@ -171,7 +171,7 @@ namespace POS.UI.Controllers
         }
         public IActionResult PostCustomerToNAV()
         {
-            NavPostData sync = new NavPostData(_context, _mapper,_logger);
+            NavPostData sync = new NavPostData(_context, _mapper);
             BackgroundJob.Enqueue(() => sync.PostCustomer());
             var data = new
             {

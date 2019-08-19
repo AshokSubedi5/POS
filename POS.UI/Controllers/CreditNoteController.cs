@@ -146,7 +146,7 @@ namespace POS.UI.Controllers
                     //background task
                     BackgroundJob.Enqueue(() => SendDataToIRD(creditNote, store));
                     //Send data to NAV
-                    NavPostData navPostData = new NavPostData(_context, _mapper,_logger);
+                    NavPostData navPostData = new NavPostData(_context, _mapper);
                     BackgroundJob.Enqueue(() => navPostData.PostCreditNote(navCreditMemo));
 
                     //for api return

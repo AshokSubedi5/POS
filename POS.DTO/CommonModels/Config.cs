@@ -10,6 +10,7 @@ namespace POS.DTO
         public string ClientPort { get; set; }
         public string IRDBaseUrl { get; set; }
         public string IRDBillUrl { get; set; }
+        public string IRDBillCreditNoteUrl { get; set; }
         public string NavApiBaseUrl { get; set; }
         public string NavPath { get; set; }
         public string NavCompanyId { get; set; }

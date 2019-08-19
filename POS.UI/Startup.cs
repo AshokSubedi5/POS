@@ -198,6 +198,7 @@ namespace POS.UI
 
             Task t = CreateUserRoles(service);
             t.Wait();
+            ClearAnyPendingJob();
 
 
 
@@ -205,7 +206,7 @@ namespace POS.UI
             // RecurringJob.AddOrUpdate(() => POSScheduler(), Cron.Daily);
 
 
-           
+
         }
 
 
@@ -240,6 +241,17 @@ namespace POS.UI
             var roles = await UserManager.GetRolesAsync(user);
             await UserManager.RemoveFromRolesAsync(user, roles.ToArray());
             await UserManager.AddToRoleAsync(user, "Administrator");
+        }
+        private void ClearAnyPendingJob()
+        {
+            //sql to delete and create hangfiredatabase
+            using (var connection = JobStorage.Current.GetConnection())
+            {
+                foreach (var recurringJob in StorageConnectionExtensions.GetRecurringJobs(connection))
+                {
+                    RecurringJob.RemoveIfExists(recurringJob.Id);
+                }
+            }
         }
 
 

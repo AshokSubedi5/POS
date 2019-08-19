@@ -250,7 +250,7 @@
 
         //Final Data
         var finalBill = header + itemHeader + item + itemTotal + footer;
-
+        debugger;
         printwsBill(finalBill, callback, data, PrintTaxInvoiceBrowser);
 
     };

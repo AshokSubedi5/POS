@@ -1174,34 +1174,57 @@ namespace POS.UI.Sync
         public void UpdateCacheItemViewModel()
         {
             bool IsItemCacheInProcess = false;
-            IList<ItemViewModel> itemsTotal = new List<ItemViewModel>();
-            IList<ItemViewModel> itemsTemp = new List<ItemViewModel>();
+
             _cache.TryGetValue("IsItemCacheInProcess", out IsItemCacheInProcess);
 
             if (!IsItemCacheInProcess)
             {
                 _cache.Set("IsItemCacheInProcess", true);
                 //update cache
-
+                Config config = ConfigJSON.Read();
                 //split data to 1lakh and save to cache
-                int count = 10000, skip = 0;
-                _context.ChangeTracker.AutoDetectChangesEnabled = false;
+                int count = 100000, skip = 0, errorCount = 0;
+                DateTime startDate = DateTime.Now;
+                //_context.ChangeTracker.AutoDetectChangesEnabled = false;
                 for (; ; )
                 {
                     try
                     {
-                        itemsTemp = _context.ItemViewModel.AsNoTracking().Skip(skip).Take(count).ToList();
-                        if (itemsTemp.Count() == 0 && itemsTotal.Count() > 0)
+                        IList<ItemViewModel> itemsTotal = new List<ItemViewModel>();
+                        _context.Database.SetCommandTimeout(TimeSpan.FromHours(1));
+                        //IList<ItemViewModel> itemsTemp = _context.ItemViewModel.FromSql("SPItemViewModel @p0, @p1", count, skip).ToList();
+                        IList<ItemViewModel> itemsTemp = _context.ItemViewModel.Skip(skip).Take(count).ToList();
+                        if (itemsTemp.Count() > 0)
                         {
+                            _cache.TryGetValue("ItemViewModel", out itemsTotal);
+                            if (itemsTotal == null)
+                            {
+                                itemsTotal = new List<ItemViewModel>();
+                            }
+                            itemsTotal = itemsTotal.Concat(itemsTemp).ToList();
                             _cache.Set("ItemViewModel", itemsTotal);
+
+                        }
+                        else
+                        {
+                            double totalTimeTake = (DateTime.Now - startDate).TotalMinutes;
+                            config.Environment = "Total Time take " + totalTimeTake + " Mins";
+                            ConfigJSON.Write(config);
                             break;
                         }
-
-                        itemsTotal = itemsTotal.Concat(itemsTemp).ToList();
+                        config.Environment = itemsTotal.Count() + " item cached";
+                        // itemsTotal = itemsTotal.Concat(itemsTemp).ToList();
                         skip = skip + count;
+                        // config.Environment = itemsTotal.Count() + " item cached";
+                        ConfigJSON.Write(config);
+
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        if (errorCount > 5)
+                            break;
+                        errorCount += 1;
+
 
                     }
                 }

@@ -465,7 +465,7 @@ namespace POS.UI.Controllers
                         //Send data to IRD
                         BackgroundJob.Enqueue(() => SendDataToIRD(salesInvoice, store));
                         //Send data to NAV
-                        NavPostData navPostData = new NavPostData(_context, _mapper,_logger);
+                        NavPostData navPostData = new NavPostData(_context, _mapper);
                         BackgroundJob.Enqueue(() => navPostData.PostSalesInvoice(navSalesInvoice));
 
 
@@ -524,7 +524,7 @@ namespace POS.UI.Controllers
                 customer.CustomerDiscGroup = "RSP";
                 _context.Add(customer);
                 _context.SaveChanges();
-                NavPostData navPost = new NavPostData(_context, _mapper, _logger);
+                NavPostData navPost = new NavPostData(_context, _mapper);
                 BackgroundJob.Enqueue(() => navPost.PostCustomer());
                 return customer;
 

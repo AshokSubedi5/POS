@@ -6,11 +6,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using POS.Core;
 using POS.DTO;
+using POS.UI.Helper;
 using POS.UI.Sync;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace POS.UI.Controllers
 {
@@ -84,7 +86,7 @@ namespace POS.UI.Controllers
         {
             try
             {
-                BackgroundJob.Enqueue(() => UpdateCacheItemBackground());
+                BackgroundJob.Enqueue(() => UpdateCacheItemViewModel());
 
                 var data = new
                 {
@@ -103,37 +105,93 @@ namespace POS.UI.Controllers
                 return StatusCode(500, data);
             }
         }
-        public void UpdateCacheItemBackground()
+        public void UpdateCacheItemViewModel()
         {
-            _cache.Remove("ItemViewModel");
-            //update cache
-            IList<ItemViewModel> itemsTotal = new List<ItemViewModel>();
-            IList<ItemViewModel> itemsTemp = new List<ItemViewModel>();
-            int count = 100000, skip = 0;
-            for (; ; )
+            bool IsItemCacheInProcess = false;
+
+            _cache.TryGetValue("IsItemCacheInProcess", out IsItemCacheInProcess);
+
+            if (!IsItemCacheInProcess)
             {
-                try
+                _cache.Set("IsItemCacheInProcess", true);
+                //update cache
+                Config config = ConfigJSON.Read();
+                //split data to 1lakh and save to cache
+                int count = 1000, skip = 0, errorCount = 0;
+                DateTime startDate = DateTime.Now;
+                //_context.ChangeTracker.AutoDetectChangesEnabled = false;
+                for(; ; )
                 {
-                    _context.Database.SetCommandTimeout(180);
-                    // itemsTemp = _context.ItemViewModel.FromSql("SPItemViewModel @p0, @p1", count, skip).ToList();
-                    itemsTemp = _context.ItemViewModel.Skip(skip).Take(count).ToList();
-                    if (itemsTemp.Count() == 0 && itemsTotal.Count() > 0)
+                    try
                     {
-                        _cache.Set("ItemViewModel", itemsTotal);
-                        break;
+                        IList<ItemViewModel> itemsTotal = new List<ItemViewModel>();
+                        _cache.TryGetValue("ItemViewModel", out itemsTotal);
+                        if (itemsTotal == null)
+                        {
+                            _cache.Set("IsItemCacheInProcess", false);
+                            break;
+                        }
+                      
+                        _context.Database.SetCommandTimeout(TimeSpan.FromHours(1));
+                        var listOfItemsChanged = _context.ItemUpdateTrigger.Skip(skip).Take(count).ToList();
+                        var listOfItemsCodeToLoad = listOfItemsChanged.Where(x => x.ACTIONS != "Delete")
+                            .Select(x => x.ITEMCODE).Distinct().ToList();
+
+                        var listOfItemsChangedCode = listOfItemsChanged.Select(x => x.ITEMCODE).Distinct().ToList();
+                        foreach (var i in listOfItemsChangedCode)
+                        {
+                            var listOfItemsToDelete = itemsTotal.Where(x => x.Code == i).ToList();
+                            foreach (var j in listOfItemsToDelete)
+                            {
+                                itemsTotal.Remove(j);
+                            }
+
+                        }
+
+                        string listOfItemsCodeString = string.Join(",", listOfItemsCodeToLoad);
+                        IList<ItemViewModel> itemsTemp = _context.ItemViewModel.FromSql("SPItemViewModel {0}", listOfItemsCodeString).ToList();
+                        if (itemsTemp.Count() > 0)
+                        {
+
+                            itemsTotal = itemsTotal.Concat(itemsTemp).ToList();
+                            _cache.Set("ItemViewModel", itemsTotal);
+
+                            //now remove trigger from database
+                            _context.RemoveRange(listOfItemsChanged);
+                            _context.SaveChanges();
+
+                            double totalTimeTake = (DateTime.Now - startDate).TotalMinutes;
+                            config.Environment = "Total Time take " + totalTimeTake + " Mins";
+                            ConfigJSON.Write(config);
+                            _cache.Set("IsItemCacheInProcess", false);
+                            break;
+
+                        }
+                        else
+                        {
+                            _cache.Set("IsItemCacheInProcess", false);
+                            break;
+                        }
+
+
                     }
-                   
-                    itemsTotal = itemsTotal.Concat(itemsTemp).ToList();
-                    skip = skip + count;
-                   
+                    catch (Exception ex)
+                    {
+                        if (errorCount > 5)
+                        {
+                            _cache.Set("IsItemCacheInProcess", false);
+                             break;
+                        }
+                        errorCount += 1;
 
-                }
-                catch (Exception ex)
-                {
-                    break;
 
+                    }
                 }
+               
+
             }
+
+
         }
 
 

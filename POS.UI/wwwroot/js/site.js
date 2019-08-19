@@ -82,8 +82,16 @@ $.fn.serializeObject = function () {
     });
     return o;
 };
+Number.prototype.toFixed = function (decimalPlaces) {
+    var factor = Math.pow(10, decimalPlaces || 0);
+    var v = (Math.round(this * factor) / factor).toString();
+    if (v.indexOf('.') >= 0) {
+        return v + factor.toString().substr(v.length - v.indexOf('.'));
+    }
+    return v + '.' + factor.toString().substr(1);
+};
 
-function CurrencyFormat(amount) {    
+function CurrencyFormat(amount) {      
     let amountFloat = parseFloat(amount);
     let isNegative = false;
     if (isNaN(amountFloat))

@@ -218,64 +218,26 @@ namespace POS.UI.Controllers
         }
 
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Create(Customer customer)
-        {
-            if (ModelState.IsValid)
-            {
-                if (AddCustomer(customer))
-                {
-                    NavPostData navPost = new NavPostData(_context, _mapper,_logger);
-                    BackgroundJob.Enqueue(() => navPost.PostCustomer());
-                    TempData["StatusMessage"] = "Customer Created Successfully !!";
-                }
-                else
-                    TempData["StatusMessage"] = "Error occor, try again later !!";
-                return RedirectToAction(nameof(Index));
-            }
-            return View(customer);
-        }
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public IActionResult Create(Customer customer)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        if (CreateMembership(customer))
+        //        {
+        //            NavPostData navPost = new NavPostData(_context, _mapper);
+        //            BackgroundJob.Enqueue(() => navPost.PostCustomer());
+        //            TempData["StatusMessage"] = "Customer Created Successfully !!";
+        //        }
+        //        else
+        //            TempData["StatusMessage"] = "Error occor, try again later !!";
+        //        return RedirectToAction(nameof(Index));
+        //    }
+        //    return View(customer);
+        //}
 
-        public bool AddCustomer(Customer customer)
-        {
-            try
-            {
-                customer.Code = Guid.NewGuid().ToString();
-                customer.Member_Id = _context.Customer.Where(x => x.Is_Member == true && x.Member_Id != null).Select(x => x.Member_Id).DefaultIfEmpty(0).Max() + 1;
-                Store store = JsonConvert.DeserializeObject<Store>(HttpContext.Session.GetString("Store"));
-                customer.Membership_Number = store.INITIAL + "-" + Convert.ToInt32(customer.Member_Id).ToString("000000");
-                customer.Created_By = User.Identity.Name;
-                customer.Registration_Date = DateTime.Now;
-                customer.MembershipDiscGroup = "CATEGORY D";
-                customer.CustomerPriceGroup = "RSP";
-                customer.CustomerDiscGroup = "RSP";
-                _context.Add(customer);
-                _context.SaveChanges();
-
-
-                //update cache
-                IEnumerable<Customer> customers;
-                if (!_cache.TryGetValue("Customers", out customers))
-                {
-                    // Key not in cache, so get data.
-                    customers = _context.Customer.ToList();
-
-                    _cache.Set("Customers", customers);
-                }
-                customers.ToList().Add(customer);
-                _cache.Set("Customer", customers);
-                return true;
-
-            }
-            catch (Exception ex)
-            {
-                if (ex.InnerException.Message.Contains("idx_unique_member_id"))
-                    return AddCustomer(customer);
-                else
-                    return false;
-            }
-        }
+        
 
         //// GET: Customer/Edit/5
         //public async Task<IActionResult> Edit(int? id)
@@ -448,9 +410,21 @@ namespace POS.UI.Controllers
                 {
                     customer.Code = Guid.NewGuid().ToString();
                     customer.Is_Member = true;
-                    customer.Member_Id = _context.Customer.Where(x => x.Is_Member == true && x.Member_Id != null).Select(x => x.Member_Id).DefaultIfEmpty(0).Max() + 1;
+                    customer.Member_Id = _context.Customer.Where(x => x.Is_Member == true && x.Member_Id != null).Select(x => x.Member_Id).DefaultIfEmpty(0).Max() + 1;                    
                     Store store = JsonConvert.DeserializeObject<Store>(HttpContext.Session.GetString("Store"));
                     customer.Membership_Number = store.INITIAL + "-" + Convert.ToInt32(customer.Member_Id).ToString("000000");
+                    //check number series already
+                    Customer isCustomerExist = _context.Customer.FirstOrDefault(x => x.Membership_Number == customer.Membership_Number);
+                    if (isCustomerExist != null)
+                    {
+                        if (isCustomerExist.Member_Id != customer.Member_Id)
+                        {
+                            isCustomerExist.Member_Id = customer.Member_Id;
+                            _context.Entry(isCustomerExist).State = EntityState.Modified;
+                            _context.SaveChanges();
+                        }
+                        return CreateMembership(customer);
+                    }
                     customer.Created_By = User.Identity.Name;
                     customer.Registration_Date = DateTime.Now;
                     customer.CustomerDiscGroup = "RSP";
@@ -473,7 +447,7 @@ namespace POS.UI.Controllers
                     customers.Add(customer);
                     _cache.Set("Customer", customers);
 
-                    NavPostData navPost = new NavPostData(_context, _mapper,_logger);
+                    NavPostData navPost = new NavPostData(_context, _mapper);
                     BackgroundJob.Enqueue(() => navPost.PostCustomer());
                     return Ok(new { StatusMessage = "Membership Created Successfully !!", Membership = customer });
                 }
@@ -481,8 +455,10 @@ namespace POS.UI.Controllers
                 {
                     if (ex.Message.Contains("'UniqueMobileNumber") || ex.InnerException.Message.Contains("UniqueMobileNumber"))
                         return StatusCode(409, new { StatusMessage = "Mobile Number Already Register !!" });
-                    else if (ex.Message.Contains("idx_unique_member_id") || ex.InnerException.Message.Contains("idx_unique_member_id"))
+                    else if (ex.Message.Contains("idx_unique_member_id") || ex.InnerException.Message.Contains("idx_unique_member_id") &&
+                             ex.Message.Contains("duplicate") || ex.InnerException.Message.Contains("duplicate"))
                         return CreateMembership(customer);
+
                     else
                         return StatusCode(500, new { StatusMessage = ex.Message });
 

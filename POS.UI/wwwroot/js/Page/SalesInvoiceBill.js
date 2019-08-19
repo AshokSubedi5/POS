@@ -281,16 +281,19 @@
 
     };
     let handleBackButtonEvent = () => {
-        if (!_.isEmpty(getUrlParameters())) {
-            debugger;
+        if (!_.isEmpty(getUrlParameters())) {           
             var id = getUrlParameters();
             var mode = GetUrlParameters("mode");
             var member = GetUrlParameters("M");
-            if (mode === "tax")
-                setTimeout(() => { location.assign(window.location.origin + "/SalesInvoice/Index/" + id + "?Mode=tax&M=" + member) }, 100);
-            else
-                setTimeout(() => { location.assign(window.location.origin + "/SalesInvoice/Index/" + id + "?M=" + member) }, 100);;
-            return;
+            if (mode === "tax") {
+                location.assign(window.location.origin + "/SalesInvoice/Index/" + id + "?Mode=tax&M=" + member);
+                setTimeout(() => { location.assign(window.location.origin + "/SalesInvoice/Index/" + id + "?Mode=tax&M=" + member); }, 100);                
+            }
+            else {
+                location.assign(window.location.origin + "/SalesInvoice/Index/" + id + "?M=" + member);
+                setTimeout(() => { location.assign(window.location.origin + "/SalesInvoice/Index/" + id + "?M=" + member); }, 100);                
+            }
+            return false;
         }
     };
     let getUrlParameters = () => {
