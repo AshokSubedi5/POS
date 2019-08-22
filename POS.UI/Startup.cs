@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,7 @@ using POS.DTO;
 using POS.UI.Helper;
 using POS.UI.Models;
 using System;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -97,7 +99,12 @@ namespace POS.UI
 
 
             services.AddAutoMapper();
-
+            services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
+            services.AddResponseCompression(options =>
+            {
+                options.Providers.Add<GzipCompressionProvider>();
+                options.EnableForHttps = true;
+            });
 
             services.AddMemoryCache();
             services.AddResponseCaching();
@@ -132,10 +139,11 @@ namespace POS.UI
             //        DisableGlobalLocks = true
             //    }));
 
-            //services.AddHangfireServer();
-            services.AddHangfire(opt => opt.UseSqlServerStorage(Configuration.GetConnectionString("DefaultConnection"),
+            //services.AddHangfireServer();            
+            services.AddHangfire(opt => opt.UseSqlServerStorage(Configuration.GetConnectionString("HangFireConnection"),
     new SqlServerStorageOptions
     {
+        PrepareSchemaIfNecessary = true,
         CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
         QueuePollInterval = TimeSpan.FromMinutes(30),
         UseRecommendedIsolationLevel = true,
@@ -162,7 +170,7 @@ namespace POS.UI
             app.UseStaticFiles();           
             app.UseSession();
             app.UseCookiePolicy();
-
+            app.UseResponseCompression();
 
 
 
@@ -190,6 +198,7 @@ namespace POS.UI
 
             Task t = CreateUserRoles(service);
             t.Wait();
+            ClearAnyPendingJob();
 
 
 
@@ -197,7 +206,7 @@ namespace POS.UI
             // RecurringJob.AddOrUpdate(() => POSScheduler(), Cron.Daily);
 
 
-           
+
         }
 
 
@@ -232,6 +241,17 @@ namespace POS.UI
             var roles = await UserManager.GetRolesAsync(user);
             await UserManager.RemoveFromRolesAsync(user, roles.ToArray());
             await UserManager.AddToRoleAsync(user, "Administrator");
+        }
+        private void ClearAnyPendingJob()
+        {
+            //sql to delete and create hangfiredatabase
+            using (var connection = JobStorage.Current.GetConnection())
+            {
+                foreach (var recurringJob in StorageConnectionExtensions.GetRecurringJobs(connection))
+                {
+                    RecurringJob.RemoveIfExists(recurringJob.Id);
+                }
+            }
         }
 
 
