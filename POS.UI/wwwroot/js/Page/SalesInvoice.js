@@ -201,7 +201,7 @@ const invoice = (function () {
             }
         });
     };
-    let getItemReferenceData = (callback) => {       
+    let getItemReferenceData = (callback) => {
         $.ajax({
             url: window.location.origin + "/SalesInvoice/GetItemReferenceData/?id=" + getUrlParameters(),
             type: "GET",
@@ -216,7 +216,7 @@ const invoice = (function () {
                     console("Error: cannot get item reference data");
                 }
             }
-            
+
         });
     };
     let getUrlParameters = () => {
@@ -475,12 +475,12 @@ const invoice = (function () {
         //    tax = (grossAmount - discount) * taxPercent / 100;
         //}
         //later calculations
-       
+
         var rate = result.rate || result.Rate || 0;
         var originalRate = rate == 0 ? "" : "data-original-rate=" + rate;
         var popupRate = (result.Invoice_Number != undefined && result.Invoice_Number.indexOf("TI-") > -1 && isVatable == true ? result.RateExcludeVatWithoutRoundoff * 1.13 : rate).toFixed(2);
         var discount = result.Discount || 0;
-       
+
         var grossAmount = 0;
         var tax = 0;
         var netAmount = 0;
@@ -488,7 +488,7 @@ const invoice = (function () {
         //invoiceItems[0].sn
         //highlight row
         makeRowAtTopAndHightlight(row);
-        
+
         //discount make disable with respect to permission
         var discountDisabled = permission.salesDiscountItemwise === false ? "disabled" : isDiscountable === false ? "disabled" : "";
         var discountLimit = permission.salesDiscountItemLimit === 0 ? "" : "data-max=" + permission.salesDiscountItemLimit;
@@ -1030,7 +1030,7 @@ const invoice = (function () {
 
         return discount;
     };
-    
+
     let calcRate = (itemCode, quantity, row) => {
 
 
@@ -1074,7 +1074,7 @@ const invoice = (function () {
         var rate = _.filter(filterByCustomerGroup, function (x) {
             return x.rateMinimumQuantity === 0;
         });
-        
+
         //check if multiple open rate
         var selectedRate = parseFloat($(row).find(".Rate").data("popup-rate"));
         if (!isNaN(selectedRate) && selectedRate > 0) {
@@ -1100,7 +1100,7 @@ const invoice = (function () {
                             callback: function () {
                                 rate = $("#rateDropdown :selected").val();
                                 row.find(".Rate").data("popup-rate", rate);
-                                
+
                                 //row.find(".Rate").data("rate-selected", true);
                                 $(row).data("isChanged", true);
 
@@ -1202,7 +1202,7 @@ const invoice = (function () {
                     grossAmout = 0;
 
 
-                
+                debugger;
                 if ($(this).data("isChanged") != undefined && $(this).data("isChanged") == true) {
 
 
@@ -1237,7 +1237,7 @@ const invoice = (function () {
                     tax = calculateTax((rateExcludeTax - discountExcVat), taxPercent, taxable) * quantity;
 
 
-                   
+
                     let discountType = $(this).find(".Discount").data("discountType");
                     if (discountPercent > 0 && discountType !== "InlineManualDiscount") {
                         $(this).find(".Discount").data("isdiscountable", false);
@@ -1257,18 +1257,17 @@ const invoice = (function () {
                     }
 
                     //if inline discount then calculate direct
-                    
+
                     if (discountType === "MembershipDiscount" || discountType === "PromoDiscount")
-                        discount = discount * quantity;
+                        discount = parseFloat((grossAmount.toFixed(2) * discountPercent / 100).toFixed(2));
                     else if ($("input[name='flatDiscount']:checked").val() === "percent") {
-                        discount = discount * quantity;
+                        discount = parseFloat((grossAmount.toFixed(2) * discountPercent / 100).toFixed(2));
                     }
                     else if ($("input[name='flatDiscount']:checked").val() === "amount") {
                         //if it flat discount with amount then donot update discount
                     }
                     else if (discountType === "InlineManualDiscount") {
-                        discount = parseFloat($(this).find(".Discount").data("original-value"));
-                        discount = discount * quantity;
+                        discount = parseFloat((grossAmount.toFixed(2) * discountPercent / 100).toFixed(2));
                     }
 
                     //    discount = discount * quantity;
@@ -1314,6 +1313,8 @@ const invoice = (function () {
                     netAmount = parseFloat($(this).find(".NetAmount").val());
                     rateExcludeTax = parseFloat($(this).find(".Rate").data("RateExcludedVatWithoutRoundoff"));
                     discountExcVat = parseFloat($(this).find(".Discount").data("DiscountExcVat"));
+                    discountPercent = parseFloat($(this).find(".Discount").data("DiscountPercent"))
+
                 }
 
 
@@ -1326,16 +1327,20 @@ const invoice = (function () {
                 totalNetAmount += netAmount;
 
                 //calc taxable and non taxable
+                var grossRateN = parseFloat((rateExcludeTax * quantity).toFixed(2));
+                var grossDiscountN = parseFloat((grossRateN * discountPercent / 100).toFixed(2));
                 if (taxable)
-                    totalTaxableAmount += parseFloat(parseFloat((rateExcludeTax * quantity).toFixed(2)) - parseFloat((discountExcVat * quantity).toFixed(2)).toFixed(2))// parseFloat(((rateExcludeTax - discountExcVat) * quantity).toFixed(2));
-                else {
-                    totalNonTaxableAmount += parseFloat(parseFloat((rateExcludeTax * quantity).toFixed(2)) - parseFloat((discountExcVat * quantity).toFixed(2)).toFixed(2))
-                }
+                    totalTaxableAmount += parseFloat(grossRateN - grossDiscountN);// parseFloat(((rateExcludeTax - discountExcVat) * quantity).toFixed(2));
+                else
+                    totalNonTaxableAmount += parseFloat(grossRateN - grossDiscountN);
+
+
+
             });
         }
-       
+        debugger;
         //calctotal tax
-        totalTax =  totalTaxableAmount * 13 / 100;
+        totalTax = totalTaxableAmount * 13 / 100;
         totalNetAmount = totalTaxableAmount + totalNonTaxableAmount + parseFloat(totalTax.toFixed(2));
         //assign total
         $("#totalQuantity").text(CurrencyFormat(totalQuantity));
@@ -1432,7 +1437,7 @@ const invoice = (function () {
         });
     };
     let calcFlatDiscount = () => {
-       
+
         var type = $("input[name='flatDiscount']:checked").val();
         var value = parseFloat($("#flat_discount").val() || 0).toFixed(2);
         var percent = 0;
@@ -1489,7 +1494,7 @@ const invoice = (function () {
         return tax;
     };
     let validateInlineDiscount = (row) => {
-       
+
         let maxDiscountPercent = $(row).data("max");
         let grossAmount = parseFloat($(row).parent().parent().find(".GrossAmount").val());
         let givenDiscountAmount = parseFloat($(row).val());

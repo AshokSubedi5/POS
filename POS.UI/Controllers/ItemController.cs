@@ -303,7 +303,7 @@ namespace POS.UI.Controllers
                 {
                     
                     //update cache
-                    //BackgroundJob.Enqueue(() => UpdateCacheItemViewModel());
+                    BackgroundJob.Enqueue(() => UpdateCacheItemViewModel());
                     //items = GetItemsRawData(code).ToList();
                     items = new List<ItemViewModel>();
                 }

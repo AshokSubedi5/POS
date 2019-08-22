@@ -3,7 +3,7 @@
     let salesItems = [];
     var isFirstTimeLoadItem = true;
     var invoiceExpiredDays = 30;
-    var table = document.getElementById("item_table").getElementsByTagName('tbody')[0];
+    var table = document.getElementById("item_table").getElementsByTagName('tbody')[0];   
     let $form = $('form#Credit_Note_Form');
     let taxPercent = 13;
    
@@ -123,8 +123,7 @@
         kendo.ui.progress($("#item_table"), true);
         if (validateInvoiceNumber(invoiceNumber)) {
             getInvoice(invoiceNumber, function (data) {
-                if (validateInvoiceData(data.invoiceData)) {
-                    debugger;
+                if (validateInvoiceData(data.invoiceData)) {                                      
                     salesItems = data.invoiceData.salesInvoiceItems;
                     resetTransactionData();
                     loadPausedTransactionData(data.invoiceData);
@@ -283,7 +282,7 @@
                 var promoDiscount = parseFloat($(this).find(".Discount").data("promodiscount") || 0);
                 var loyaltyDiscount = parseFloat($(this).find(".Discount").data("loyaltydiscount") || 0);
                 var discountPercent = parseFloat($(this).find(".Discount").data("discountpercent") || 0);
-                debugger;
+               
 
                 var tax = $(this).find(".Tax").val() || 0;
                 let taxable = $(this).find(".Tax").data("isvatable");
@@ -300,9 +299,9 @@
 
                     totalQuantity += quantity;
                     totalDiscount += parseFloat(discount.toFixed(2));
-                    totalTax += tax;
+                    //totalTax += tax;
                     totalGrossAmount += grossAmount;
-                    totalNetAmount += netAmount;
+                    //totalNetAmount += netAmount;
 
 
                     //calc taxable and non taxable
@@ -311,13 +310,22 @@
                     //else {
                     //    totalNonTaxableAmount += rate * quantity;
                     //}
+                   
 
                     //new logic
+                    //if (taxable)
+                    //    totalTaxableAmount += parseFloat(parseFloat((rateExcludeVat * quantity).toFixed(2)) - parseFloat(discount.toFixed(2)).toFixed(2))// parseFloat(((rateExcludeTax - discountExcVat) * quantity).toFixed(2));
+                    //else {
+                    //    totalNonTaxableAmount += parseFloat((rateExcludeVat * quantity).toFixed(2));
+                    //}
+
+                    //new new logic
+                    var grossRateN = parseFloat((rateExcludeVat * quantity).toFixed(2));
+                    var grossDiscountN = parseFloat((grossRateN * discountPercent / 100).toFixed(2));
                     if (taxable)
-                        totalTaxableAmount += parseFloat(parseFloat((rateExcludeVat * quantity).toFixed(2)) - parseFloat(discount.toFixed(2)).toFixed(2))// parseFloat(((rateExcludeTax - discountExcVat) * quantity).toFixed(2));
-                    else {
-                        totalNonTaxableAmount += parseFloat((rateExcludeVat * quantity).toFixed(2));
-                    }
+                        totalTaxableAmount += parseFloat(grossRateN - grossDiscountN);// parseFloat(((rateExcludeTax - discountExcVat) * quantity).toFixed(2));
+                    else
+                        totalNonTaxableAmount += parseFloat(grossRateN - grossDiscountN);
 
 
                     //for promo or loyalty discount
@@ -330,18 +338,23 @@
                     $(this).find(".GrossAmount").val(grossAmount.toFixed(2));
                     $(this).find(".NetAmount").val(netAmount.toFixed(2));
                     $(this).find(".Discount").val(discount.toFixed(2));
-                    
                     $(this).find(".Tax").val(tax.toFixed(2));
-                    //assign total
-                    $("#totalQuantity").text(NumberFormat(totalQuantity));
-                    $("#totalGrossAmount").text(CurrencyFormat(totalGrossAmount));
-                    $("#totalDiscount").text(CurrencyFormat(totalDiscount));
-                    $("#totalTax").text(CurrencyFormat(totalTax));
-                    $("#totalNetAmount").text(CurrencyFormat(totalNetAmount));
+                   
 
                 }
 
             });
+
+            totalTax = totalTaxableAmount * 13 / 100;
+            totalNetAmount = totalTaxableAmount + totalNonTaxableAmount + parseFloat(totalTax.toFixed(2));
+
+
+            //assign total
+            $("#totalQuantity").text(NumberFormat(totalQuantity));
+            $("#totalGrossAmount").text(CurrencyFormat(totalGrossAmount));
+            $("#totalDiscount").text(CurrencyFormat(totalDiscount));
+            $("#totalTax").text(CurrencyFormat(totalTax));
+            $("#totalNetAmount").text(CurrencyFormat(totalNetAmount));
         }
         else {
             //assign total

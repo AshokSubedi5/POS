@@ -12,7 +12,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace POS.UI.Controllers
 {
@@ -194,6 +193,61 @@ namespace POS.UI.Controllers
 
         }
 
+
+        public IActionResult DeleteCahceItemInProcess()
+        {
+            try
+            {
+                bool IsItemCacheInProcess = false;
+                _cache.TryGetValue("IsItemCacheInProcess", out IsItemCacheInProcess);
+                if (IsItemCacheInProcess)
+                {
+                    _cache.Set("IsItemCacheInProcess", false);
+                }
+
+                    var data = new
+                {
+                    Status = 200,
+                    Message = "Success"
+                };
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                var data = new
+                {
+                    Status = 500,
+                    Message = "Error :" + ex.Message
+                };
+                return StatusCode(500, data);
+            }
+        }
+
+        public IActionResult DeleteNAVSalesOrder()
+        {
+            try
+            {
+                NavPostData navPostData = new NavPostData(_context, _mapper);
+                BackgroundJob.Enqueue(() => navPostData.DeleteSalesOrder());
+                
+
+                var data = new
+                {
+                    Status = 200,
+                    Message = "Success"
+                };
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                var data = new
+                {
+                    Status = 500,
+                    Message = "Error :" + ex.Message
+                };
+                return StatusCode(500, data);
+            }
+        }
 
     }
 }

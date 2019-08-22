@@ -19,6 +19,7 @@ using POS.DTO;
 using POS.UI.Helper;
 using POS.UI.Models;
 using System;
+using System.Collections.Generic;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
@@ -114,7 +115,7 @@ namespace POS.UI
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddJsonOptions(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore); ;
 
-           
+
             services.AddSingleton<InMemoryCache>();
 
             services.AddSession(options =>
@@ -146,6 +147,9 @@ namespace POS.UI
         PrepareSchemaIfNecessary = true,
         CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
         QueuePollInterval = TimeSpan.FromMinutes(30),
+        JobExpirationCheckInterval = TimeSpan.FromMinutes(30),
+        CountersAggregateInterval = TimeSpan.FromMinutes(5),
+        
         UseRecommendedIsolationLevel = true,
         UsePageLocksOnDequeue = true,
         DisableGlobalLocks = true
@@ -167,7 +171,7 @@ namespace POS.UI
             //}
 
             app.UseHttpsRedirection();
-            app.UseStaticFiles();           
+            app.UseStaticFiles();
             app.UseSession();
             app.UseCookiePolicy();
             app.UseResponseCompression();
@@ -176,9 +180,13 @@ namespace POS.UI
 
 
             app.UseAuthentication();
-            app.UseHangfireServer();
+            
             app.UseResponseCaching();
-
+            var options = new BackgroundJobServerOptions {
+                WorkerCount = 2,//Environment.ProcessorCount,
+                HeartbeatInterval = TimeSpan.FromMinutes(5)
+            };
+            app.UseHangfireServer(options);
             app.UseHangfireDashboard(options: new DashboardOptions()
             {
                 Authorization = new IDashboardAuthorizationFilter[]
@@ -187,8 +195,8 @@ namespace POS.UI
            },
                 StatsPollingInterval = 30000
             });
-           
-           
+
+
             app.UseMvc(routes =>
             {
                 routes.MapRoute(
@@ -210,7 +218,7 @@ namespace POS.UI
         }
 
 
-        
+
         private async Task CreateUserRoles(IServiceProvider serviceProvider)
         {
             var RoleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -245,13 +253,7 @@ namespace POS.UI
         private void ClearAnyPendingJob()
         {
             //sql to delete and create hangfiredatabase
-            using (var connection = JobStorage.Current.GetConnection())
-            {
-                foreach (var recurringJob in StorageConnectionExtensions.GetRecurringJobs(connection))
-                {
-                    RecurringJob.RemoveIfExists(recurringJob.Id);
-                }
-            }
+            JobStorage.Current?.GetMonitoringApi()?.PurgeJobs();
         }
 
 
@@ -259,5 +261,5 @@ namespace POS.UI
     }
 
 
-  
+
 }
