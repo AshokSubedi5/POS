@@ -41,11 +41,11 @@
                 },
                 {
                     title: "BarCode",
-                    width: "8%"
+                    width: "15%"
                 },
                 {
                     title: "Item",
-                    width: "31%"
+                    width: "24%"
                 },
                 {
                     title: "Unit",
