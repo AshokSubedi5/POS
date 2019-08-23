@@ -284,6 +284,7 @@
             function CalcTable() {
                 let table = document.getElementById("grid").getElementsByTagName('tbody')[0];
                 let footerTotalSale = 0, footerExemptSale = 0, footerZeroTaxRateSale = 0, footerTaxableAmount = 0, footerVatAmount = 0, footerTotalAmount = 0;
+                debugger;
                 $.each(table.rows, function (i, v) {
 
                     let totalSale = parseFloat($(this).find(".total-sale").text());

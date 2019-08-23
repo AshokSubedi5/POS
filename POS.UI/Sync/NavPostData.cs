@@ -355,7 +355,7 @@ namespace POS.UI.Sync
             }
             return true;
         }
-       
+        [AutomaticRetry(Attempts = 1)]
         public void PostCustomer()
         {
             Config config = ConfigJSON.Read();

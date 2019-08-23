@@ -642,6 +642,11 @@
             $("#SaveButton").attr("disabled", false);
             return false;
         }
+        let tableRows = document.getElementById("item_table").getElementsByTagName('tbody')[0];
+        if (tableRows === undefined || tableRows.rows.length === 0) {
+            bootbox.alert("No Item selected !!");
+            return false;
+        }
 
         debugger;
         //console.log("isredeem", document.getElementById('isRedeemed').value)

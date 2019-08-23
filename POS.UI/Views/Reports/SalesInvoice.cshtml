@@ -202,9 +202,15 @@
                 excel: {
                     fileName: "ABBREVIATED TAX INVOICE Report.xlsx",
                     proxyURL: window.location.origin + "/Reports/Excel_Export_Save",
-                    filterable: true
+                    filterable: true,
+                    allPages: true
                 },
+                excelExport: function (e) {
+                    debugger;
+            kendo.ui.progress(this.element, false);
+          },
                 dataSource: {
+
                     transport: {
                         read: {
                             url: "/Reports/SalesInvoiceApi?startdate=" + startdate + "&enddate=" + enddate,
@@ -271,7 +277,7 @@
 
                     ],
                     sort: [{ field: "invoice_Number", dir: "desc" }]
-                
+
                 },
                 filterable: true,
                 sortable: true,
@@ -295,6 +301,7 @@
                         field: "trans_Date_Ad",
                         title: "Date",
                         format: "{0:MM/dd/yyyy}",
+                       // groupHeaderTemplate:  "#= value # | date:localeShortDate + ' HH:mm:ss'"
                     }, {
                         field: "trans_Date_Bs",
                         title: "BS",
@@ -304,6 +311,7 @@
                         groupFotterAttributes: {
                             "class": "p-1 text-right"
                         },
+                       // groupHeaderTemplate: "Units In Stock: #= value # (Count: #= count#)"
                         groupFooterTemplate: "Count: #: count #",
                         //footerTemplate: "Total"
                     },
@@ -431,6 +439,10 @@
                 ],
             });
             // $(".k-grid-content").css("overflow-y", "hidden").mCustomScrollbar();
+            $(".k-grid-excel")[0].onmousedown = function (e) {
+
+        $("#loadingDiv").show();
+      }
         }
 
         $(document).ready(function () {

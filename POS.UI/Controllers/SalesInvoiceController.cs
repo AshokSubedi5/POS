@@ -465,6 +465,7 @@ namespace POS.UI.Controllers
                         //Send data to IRD
                         BackgroundJob.Enqueue(() => SendDataToIRD(salesInvoice, store));
                         //Send data to NAV
+                        //Config config = 
                         NavPostData navPostData = new NavPostData(_context, _mapper);
                         BackgroundJob.Enqueue(() => navPostData.PostSalesInvoice(navSalesInvoice));
 

@@ -555,14 +555,19 @@
 
     //********* Events **************//
     $("#customer").on('change', customerChangeEvent);
-    $("#AddCashButton").on('click', function () {
-        if ($("#cashAmount").val() !== "") {
+    $("#AddCashButton").on('click', function () {       
+        if (parseFloat($("#cashAmount").val()) <= 0)
+            $("#cashAmount").val("");
+        else if ($("#cashAmount").val() !== "") {
             addRow("Cash", "", $("#cashAmount").val());
             clear();
         }
+       
     });
     $("#AddDebitCardButton").on('click', function () {
-        if ($("#cardAmount").val() !== "") {
+        if (parseFloat($("#cardAmount").val()) <= 0)
+            $("#cardAmount").val("");
+       else if ($("#cardAmount").val() !== "") {
             addRow("Card", "Card", $("#cardAmount").val());
             clear();
         }
@@ -572,7 +577,9 @@
             showErrorMessage("Please select credit account first !!");
             return false;
         }
-
+        if (parseFloat($("#creditAmount").val()) <= 0)
+            $("#creditAmount").val("");
+        else
         if ($("#creditAmount").val() !== "") {
             addRow("Credit", $("#customer").text(), $("#creditAmount").val());
             clear();
