@@ -10,6 +10,7 @@ namespace POS.DTO
         [Key]
         public string Trans_Date_AD { get; set; }
         public string Trans_Date_BS { get; set; }
+        public string Invoice_Number { get; set; }
         public string FROM_Invoice_Number { get; set; }
         public string To_Invoice_Number { get; set; }
         public decimal Total_Payable_Amount { get; set; }
