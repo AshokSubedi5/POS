@@ -364,7 +364,7 @@
             $("#totalTax").text("0");
             $("#totalNetAmount").text("0");
         }
-        debugger;
+        
         $("#NonTaxableAmount").val(totalNonTaxableAmount.toFixed(2));
         $("#TaxableAmount").val(totalTaxableAmount.toFixed(2));
     };
@@ -398,7 +398,7 @@
     let calcTotalPromoDiscount = () => {
         var table = document.getElementById("item_table").getElementsByTagName('tbody')[0];
         var total = 0;
-        debugger;
+        
         $.each(table.rows, function (i, v) {
             //calculations
             total += parseFloat($(this).find(".Discount").data("promodiscount") || 0);
@@ -406,7 +406,7 @@
         return total;
     };
     let calcTotalMembershipDiscount = () => {
-        debugger;
+        
         var table = document.getElementById("item_table").getElementsByTagName('tbody')[0];
         var total = 0;
         $.each(table.rows, function (i, v) {
@@ -520,7 +520,7 @@
         cell10.className = "netAmount-width-item p-1 pr-3";
         cell11.className = "action-width-item p-1";
 
-        debugger;
+        
         var barCode = result.bar_Code || result.Bar_Code;
         var itemName = result.name || result.Name;
         var itemCode = result.itemCode || result.ItemCode; //temporary update code to remarks field :)               
@@ -648,7 +648,7 @@
             return false;
         }
 
-        debugger;
+        
         //console.log("isredeem", document.getElementById('isRedeemed').value)
         //get items
         var table = $("#item_table");

@@ -1,5 +1,5 @@
 {
-  "Environment": "Total Time take 12.3227596233333 Mins",
+  "Environment": "successfully login",
   "ClientPort": "1111",
   "IRDBaseUrl": "http://103.1.92.174:9050",
   "IRDBillUrl": "api/bill",
@@ -11,9 +11,12 @@
   "IRDPassword": "test@321",
   "NavUserName": "web.user",
   "NavPassword": "W3b@2019",
-  "StopInvoicePosting": false,
-  "StopCreditNotePosting": false,
-  "StopCustomerPosting": false,
+  "StopPostingIRD": false,
+  "StopInvoicePosting": true,
+  "StopCreditNotePosting": true,
+  "StopCustomerPosting": true,
+  "OfficeHourStart": "16:00:00.3041840",
+  "OfficeHourEnd": "21:00:00.3041840",
   "Location": "SDB",
   "LoggedInUsers": [
     "Admin"

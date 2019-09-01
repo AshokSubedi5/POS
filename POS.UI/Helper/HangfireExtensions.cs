@@ -1,10 +1,6 @@
 ﻿using Hangfire;
 using Hangfire.Storage;
-using Hangfire.Storage.Monitoring;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace POS.UI.Helper
 {
@@ -12,12 +8,12 @@ namespace POS.UI.Helper
     {
         public static void PurgeJobs(this IMonitoringApi monitor)
         {
-           
+
 
             var hangfireMonitor = JobStorage.Current.GetMonitoringApi();
 
             //RecurringJobs
-            JobStorage.Current.GetConnection().GetRecurringJobs().ForEach(xx => BackgroundJob.Delete(xx.Id));
+            //JobStorage.Current.GetConnection().GetRecurringJobs().ForEach(xx => BackgroundJob.Delete(xx.Id));
 
             //ProcessingJobs
             hangfireMonitor.ProcessingJobs(0, int.MaxValue).ForEach(xx => BackgroundJob.Delete(xx.Key));

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using POS.Core;
 using POS.DTO;
+using POS.UI.Helper;
 using POS.UI.Sync;
 using System;
 using System.Linq;
@@ -46,7 +47,7 @@ namespace POS.UI.Controllers
                     Store store = JsonConvert.DeserializeObject<Store>(HttpContext.Session.GetString("Store")); ;
                     creditNote.Id = Guid.NewGuid();
                     creditNote.Credit_Note_Id = _context.CreditNote.Select(x => x.Credit_Note_Id).DefaultIfEmpty(0).Max() + 1;
-                    creditNote.Credit_Note_Number = "CN-" + creditNote.Credit_Note_Id.ToString("0000") + "-" + store.INITIAL+'-'+ store.FISCAL_YEAR;
+                    creditNote.Credit_Note_Number = "CN-" + creditNote.Credit_Note_Id.ToString("0000") + "-" + store.INITIAL + '-' + store.FISCAL_YEAR;
                     creditNote.Trans_Time = DateTime.Now.TimeOfDay;
                     creditNote.Division = "Divisioin";
                     creditNote.Terminal = HttpContext.Session.GetString("Terminal");
@@ -63,7 +64,7 @@ namespace POS.UI.Controllers
                     foreach (var item in creditNote.CreditNoteItems)
                     {
                         item.Credit_Note_Id = creditNote.Id;
-                        item.Credit_Note_Number = creditNote.Credit_Note_Number;                        
+                        item.Credit_Note_Number = creditNote.Credit_Note_Number;
                         _context.CreditNoteItem.Add(item);
                     }
 
@@ -146,8 +147,12 @@ namespace POS.UI.Controllers
                     //background task
                     BackgroundJob.Enqueue(() => SendDataToIRD(creditNote, store));
                     //Send data to NAV
-                    NavPostData navPostData = new NavPostData(_context, _mapper);
-                    BackgroundJob.Enqueue(() => navPostData.PostCreditNote(navCreditMemo));
+                    Config config = ConfigJSON.Read();
+                    if (!config.StopCreditNotePosting)
+                    {
+                        NavPostData navPostData = new NavPostData(_context, _mapper);
+                        BackgroundJob.Enqueue(() => navPostData.PostCreditNote(navCreditMemo));
+                    }
 
                     //for api return
                     TempData["StatusMessage"] = "Credit Note Added Successfully";
@@ -172,7 +177,7 @@ namespace POS.UI.Controllers
         //    }
         //    return StatusCode(404);
         //}
-        [HttpGet]       
+        [HttpGet]
         public IActionResult GetCreditNote(string CN)
         {
             if (!string.IsNullOrEmpty(CN))

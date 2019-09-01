@@ -10,8 +10,8 @@ using POS.UI.Helper;
 using POS.UI.Sync;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace POS.UI.Controllers
 {
@@ -35,10 +35,11 @@ namespace POS.UI.Controllers
             try
             {
                 BackgroundJob.Enqueue(() => UpdateCacheCustomerBackground());
-               
-                var data =new  {
-                    Status=  200,
-                    Message= "Success"
+
+                var data = new
+                {
+                    Status = 200,
+                    Message = "Success"
                 };
                 return Ok(data);
             }
@@ -119,7 +120,7 @@ namespace POS.UI.Controllers
                 int count = 1000, skip = 0, errorCount = 0;
                 DateTime startDate = DateTime.Now;
                 //_context.ChangeTracker.AutoDetectChangesEnabled = false;
-                for(; ; )
+                for (; ; )
                 {
                     try
                     {
@@ -130,7 +131,7 @@ namespace POS.UI.Controllers
                             _cache.Set("IsItemCacheInProcess", false);
                             break;
                         }
-                      
+
                         _context.Database.SetCommandTimeout(TimeSpan.FromHours(1));
                         var listOfItemsChanged = _context.ItemUpdateTrigger.Skip(skip).Take(count).ToList();
                         var listOfItemsCodeToLoad = listOfItemsChanged.Where(x => x.ACTIONS != "Delete")
@@ -174,19 +175,21 @@ namespace POS.UI.Controllers
 
 
                     }
+#pragma warning disable CS0168 // The variable 'ex' is declared but never used
                     catch (Exception ex)
+#pragma warning restore CS0168 // The variable 'ex' is declared but never used
                     {
                         if (errorCount > 5)
                         {
                             _cache.Set("IsItemCacheInProcess", false);
-                             break;
+                            break;
                         }
                         errorCount += 1;
 
 
                     }
                 }
-               
+
 
             }
 
@@ -205,7 +208,7 @@ namespace POS.UI.Controllers
                     _cache.Set("IsItemCacheInProcess", false);
                 }
 
-                    var data = new
+                var data = new
                 {
                     Status = 200,
                     Message = "Success"
@@ -222,14 +225,57 @@ namespace POS.UI.Controllers
                 return StatusCode(500, data);
             }
         }
-
+        public IActionResult DeleteCahceItem()
+        {
+            try
+            {
+                _cache.Remove("ItemViewModel");
+                var data = new
+                {
+                    Status = 200,
+                    Message = "Success"
+                };
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                var data = new
+                {
+                    Status = 500,
+                    Message = "Error :" + ex.Message
+                };
+                return StatusCode(500, data);
+            }
+        }
+        public IActionResult DeleteCahceCustomer()
+        {
+            try
+            {
+                _cache.Remove("Customers");
+                var data = new
+                {
+                    Status = 200,
+                    Message = "Success"
+                };
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                var data = new
+                {
+                    Status = 500,
+                    Message = "Error :" + ex.Message
+                };
+                return StatusCode(500, data);
+            }
+        }
         public IActionResult DeleteNAVSalesOrder()
         {
             try
             {
                 NavPostData navPostData = new NavPostData(_context, _mapper);
                 BackgroundJob.Enqueue(() => navPostData.DeleteSalesOrder());
-                
+
 
                 var data = new
                 {
@@ -249,5 +295,12 @@ namespace POS.UI.Controllers
             }
         }
 
+
+
+        public IActionResult NAVSyncedErrorLog()
+        {
+            string[] text = System.IO.File.ReadAllLines(Path.GetFullPath("logs/NAVSyncLog.log"));
+            return Ok(text);
+        }
     }
 }

@@ -145,7 +145,7 @@
         vat = parseFloat(CurrencyUnFormat($("#vatSpan").text()));
         if ($("#Trans_Mode").val() !== "Tax")
             vat = 0;
-        debugger;
+        
         //var totalPayableAmount = totalGrossAmount - promoDiscount - loyaltyDiscount + vat;
         var totalPayableAmount = parseFloat($("#TotalNetAmount").val());
 
@@ -360,7 +360,7 @@
     };
 
     let paymentMethodForWholesaleCustomer = () => {
-        debugger;
+        
         if (customerList[0].CustomerPriceGroup === "WSP" || customerList[0].customerPriceGroup === "WSP" || customerList[0].Type === "1" || customerList[0].type === "1") {
             $("#cash").remove();
             $("#card").remove();
@@ -370,7 +370,7 @@
             $(".payment-mode-panel").hide();
             $("#credit-panel").show();
             $(".payment-mode[data-shortcut='f3']").trigger("click");
-            debugger;
+            
             $("#customer").val(customerList[0].name || customerList[0].Name);
             customerChangeEvent();
 
@@ -415,7 +415,7 @@
                     showErrorMessage(data.responseJSON.message);
                 }
                 else if (data.status === 200) {
-                    debugger;
+                    
                     $(".onetimewarning").show();
                     $("#creditNoteAmount").val(data.responseJSON.total_Net_Amount);
                     $("#creditNoteAmount").focus();
@@ -478,7 +478,7 @@
     let SaveBill = () => {
         //some validation
         $("#SaveButton").attr("disabled", true);
-        debugger;
+        
 
         if (parseFloat(CurrencyUnFormat($("#changeAmount").text())) < 0) {
             bootbox.alert("Tender amount is less then bill amount !!");
@@ -528,7 +528,7 @@
             contentType: "application/json; charset=utf-8",
             complete: function (result) {
                 if (result.status === 200) {
-                    debugger;
+                    
                     if (result.responseJSON.billData !== null && result.responseJSON.billData[0].trans_Mode === "Credit") {
                         result.responseJSON.copy = {
                             printCount: 0
